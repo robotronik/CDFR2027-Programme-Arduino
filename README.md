@@ -43,7 +43,7 @@ two PCA9685PW PWM drivers.
 | D10 | `SENS3` | Digital sensor 3 (input, pull-up) |
 | D11 | `SENS2` | Digital sensor 2 (input, pull-up) |
 | D12 | `SENS1` | Digital sensor 1 (input, pull-up) |
-| A1 | `POW_EN` | Buck converters enable (active high) |
+| A1 | `POW_EN` | Buck converters enable (active high): servos, pumps, valves |
 | A2 | `SENS8` | Digital sensor 8 (input, pull-up) |
 | A4 | `MASTER_I2C_DIO` | Hardware I2C data to the main computer |
 | A5 | `MASTER_I2C_CLK` | Hardware I2C clock to the main computer |
@@ -105,7 +105,7 @@ Answers to request-type commands are read back with `requestFrom()`.
 | Command | Code | Payload | Description |
 |---------|------|---------|-------------|
 | `CMD_GET_VERSION` | 0x01 | - | Returns `API_VERSION` (`uint8`) |
-| `CMD_POWER_SERVOS` | 0x11 | `on` | Drives `POW_EN` (0 = off, 1 = on) |
+| `CMD_POWER_SERVOS` | 0x11 | - | Drives `POW_EN` (target byte 1 = on, else off): servos, pumps and valves |
 | `CMD_MOVE_SERVO` | 0x12 | `target:u16, speed:u16` | Moves servo 1..7 (angle 0..180, speed in deg/s, 0 = immediate) |
 | `CMD_GET_SERVO` | 0x13 | - | Returns the current angle (`int16`) |
 | `CMD_READ_SENSOR` | 0x21 | - | Returns sensor 1..8 state (`uint8`, 1 = active) |
@@ -133,7 +133,8 @@ are still accepted so that existing main-computer code keeps working:
 | `CMD_STOP_DC_MOTOR` | 0x62 | Accepted, no effect |
 
 `CMD_POWER_SERVOS` used to switch a dedicated servo power pin; it now drives
-the buck converters enable line (`POW_EN`), which powers the servo rail.
+the buck converters enable line (`POW_EN`), which powers the servo rail and
+also the pumps and electrovalves: turning it off cuts all of them.
 
 ## Notes
 

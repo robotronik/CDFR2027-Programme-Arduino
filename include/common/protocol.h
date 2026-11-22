@@ -7,7 +7,7 @@
 
 #define CMD_GET_VERSION 0x01
 
-#define CMD_POWER_SERVOS 0x11
+#define CMD_POWER_SERVOS 0x11 // Drives POW_EN: servos, pumps and valves
 #define CMD_MOVE_SERVO 0x12
 #define CMD_GET_SERVO 0x13
 
