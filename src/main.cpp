@@ -139,7 +139,8 @@ static void on_receive(int num_bytes)
     break;
 
   case CMD_RGB_LED:
-    if (number == 1)
+    // Rainbow needs only the mode byte, the other modes also need r, g, b.
+    if (number == 1 && num_bytes >= (receive_buffer[2] == LED_MODE_RAINBOW ? 3 : 6))
       rgb_led_receive(&led, &ptr);
     break;
 
