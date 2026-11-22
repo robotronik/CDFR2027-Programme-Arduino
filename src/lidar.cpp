@@ -3,7 +3,7 @@
 #include "config.h"
 
 // Timer1 fast PWM, prescaler 1: 16 MHz / 800 = 20 kHz. OC1A drives D9.
-#define LIDAR_PERIOD_TICKS 800
+#define LIDAR_PERIOD_TICKS 800UL // UL: duty * 800 overflows a 16-bit int
 
 void lidar_init(void)
 {
