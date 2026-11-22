@@ -117,15 +117,12 @@ void loop(void)
 
 static void on_receive(int num_bytes)
 {
-  if (!Wire.available())
-    return;
-
   if (num_bytes > BUFFERONRECEIVESIZE)
     num_bytes = BUFFERONRECEIVESIZE;
+  // Read before any early return: Wire ignores every later message while bytes are left unread.
+  Wire.readBytes(receive_buffer, num_bytes);
   if (num_bytes < 2)
     return;
-
-  Wire.readBytes(receive_buffer, num_bytes);
 
   uint8_t *ptr = receive_buffer;
   uint8_t command = ReadUInt8(&ptr);
@@ -196,7 +193,9 @@ static void on_receive(int num_bytes)
     break;
   }
 
-  response_size += resp - response_buffer;
+  // A command without a reply must not drop a reply the master has not read yet.
+  if (resp != response_buffer)
+    response_size = resp - response_buffer;
 }
 
 static void on_request(void)
