@@ -4,59 +4,63 @@
 
 #define BUFFERONRECEIVESIZE 32
 
-// Pin that enables the 5V power supply for the servos
-#define PIN_SERVOS_POWER 14
+// Hardware I2C to the main computer
+#define PIN_MASTER_I2C_SDA 18 // A4
+#define PIN_MASTER_I2C_SCL 19 // A5
 
-//Pin Servo moteur
-#define PIN_SERVOMOTEUR_1 7
-#define PIN_SERVOMOTEUR_2 6
-#define PIN_SERVOMOTEUR_3 9
-#define PIN_SERVOMOTEUR_4 8
-#define PIN_SERVOMOTEUR_5 11
-#define PIN_SERVOMOTEUR_6 10
-#define PIN_SERVOMOTEUR_7 13
+// Software I2C to the PCA9685 boards
+#define PIN_PCA_I2C_SDA 2
+#define PIN_PCA_I2C_SCL 3
 
-//Pin Moteur pas a pas VALEUR HAUTE 2200 avec Microstep 1/8
-#define PIN_STEPPER_SLEEP 22
-#define PIN_STEPPER_RESET 23
-#define PIN_STEPPER_STEP_1 2
-#define PIN_STEPPER_DIR_1 42
-#define PIN_STEPPER_ENABLE_1 47
+#define PCA9685_1_ADDRESS 0x41
+#define PCA9685_2_ADDRESS 0x42
 
-#define PIN_STEPPER_STEP_2 3
-#define PIN_STEPPER_DIR_2 43
-#define PIN_STEPPER_ENABLE_2 40
+#define PIN_OUTPUT_ENABLE 7 // ~OE, active low
+#define PIN_POW_EN 15       // A1, buck converters enable
+#define PIN_PWM_LIDAR 9 // D9 / OC1A, hardware PWM
 
-#define PIN_STEPPER_STEP_3 4
-#define PIN_STEPPER_DIR_3 28
-#define PIN_STEPPER_ENABLE_3 30
+#define PIN_SENSOR_1 12
+#define PIN_SENSOR_2 11
+#define PIN_SENSOR_3 10
+#define PIN_SENSOR_4 6
+#define PIN_SENSOR_5 8
+#define PIN_SENSOR_6 5
+#define PIN_SENSOR_7 4
+#define PIN_SENSOR_8 16 // A2
 
-#define PIN_STEPPER_STEP_4 5
-#define PIN_STEPPER_DIR_4 29
-#define PIN_STEPPER_ENABLE_4 31
+// PCA9685 #1
+#define PCA_CH_LED_R 0
+#define PCA_CH_LED_G 1
+#define PCA_CH_LED_B 2
+#define PCA_CH_SERVO_1 3
+#define PCA_CH_SERVO_2 4
+#define PCA_CH_SERVO_3 5
+#define PCA_CH_SERVO_4 6
+#define PCA_CH_SERVO_5 7
+#define PCA_CH_SERVO_6 8
+#define PCA_CH_SERVO_7 9
+#define PCA_CH_EXT_PWM_10 10
+#define PCA_CH_EXT_PWM_11 11
 
-// DC Motor Pins
-#define PIN_MOTEURDC_REVERSE_1 45
-#define PIN_MOTEURDC_FORWARD_1 44
+// PCA9685 #2
+#define PCA_CH_PUMP_1 0
+#define PCA_CH_PUMP_2 1
+#define PCA_CH_PUMP_3 2
+#define PCA_CH_PUMP_4 3
+#define PCA_CH_PUMP_5 4
+#define PCA_CH_PUMP_6 5
+#define PCA_CH_EV_1 6
+#define PCA_CH_EV_2 7
+#define PCA_CH_EV_3 8
+#define PCA_CH_EV_4 9
+#define PCA_CH_EV_5 10
+#define PCA_CH_EV_6 11
+#define PCA_CH_EV_7 12
+#define PCA_CH_EV_8 13
+#define PCA_CH_EV_9 14
+#define PCA_CH_EV_10 15
 
-// Sensor Pins
-#define PIN_SENSOR_1 32
-#define PIN_SENSOR_2 33
-#define PIN_SENSOR_3 34
-#define PIN_SENSOR_4 35
-#define PIN_SENSOR_5 36
-#define PIN_SENSOR_6 37
-#define PIN_SENSOR_7 38
-#define PIN_SENSOR_8 39
-
-// LED Pins
-#define PIN_LED_1_B 66 //A12
-#define PIN_LED_1_G 65 //A11
-#define PIN_LED_1_R 64 //A10
-
-// PWM Lidar
-#define PIN_PWM_LIDAR 46
-
-//configuration Stepper
-#define DEFAULT_MAX_SPEED 5000  // Vitesse maximale (en pas par seconde)
-#define DEFAULT_MAX_ACCEL 8000 // Accélération maximale (en pas par seconde carré)
+#define SERVO_COUNT 7
+#define PUMP_COUNT 6
+#define EV_COUNT 10
+#define SENSOR_COUNT 8
