@@ -17,9 +17,10 @@ static void rgb_led_apply(rgb_led_t *led, uint8_t r, uint8_t g, uint8_t b)
     if (led->applied && r == led->applied_r && g == led->applied_g && b == led->applied_b)
         return;
 
-    pca9685_set_duty(led->pca, led->channel_r, r);
-    pca9685_set_duty(led->pca, led->channel_g, g);
-    pca9685_set_duty(led->pca, led->channel_b, b);
+    // Common-anode LED: the PCA output sinks current, so a higher duty means less light.
+    pca9685_set_duty(led->pca, led->channel_r, 255 - r);
+    pca9685_set_duty(led->pca, led->channel_g, 255 - g);
+    pca9685_set_duty(led->pca, led->channel_b, 255 - b);
     led->applied_r = r;
     led->applied_g = g;
     led->applied_b = b;
@@ -32,12 +33,7 @@ void rgb_led_receive(rgb_led_t *led, uint8_t **data)
     led->mode = mode;
 
     if (mode == LED_MODE_RAINBOW)
-    {
-        led->r = 255;
-        led->g = 0;
-        led->b = 0;
         return;
-    }
 
     uint8_t r = ReadUInt8(data);
     uint8_t g = ReadUInt8(data);
