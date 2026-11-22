@@ -57,8 +57,7 @@ void servo_run(servo_t *servo)
         return;
     }
 
-    int angle = servo->start_angle +
-                (int32_t)(servo->target_angle - servo->start_angle) * progress / servo->move_time;
+    int angle = map(progress, 0, servo->move_time, servo->start_angle, servo->target_angle);
     if (angle != servo->current_angle)
         servo_write(servo, angle);
 }
