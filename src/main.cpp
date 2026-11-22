@@ -11,15 +11,6 @@
 
 // #define SERIAL_DEBUG
 
-#define JOB_QUEUE_SIZE 8
-
-typedef struct
-{
-  uint8_t command;
-  uint8_t number;
-  uint8_t data[4];
-} job_t;
-
 static SoftwareWire pca_bus(PIN_PCA_I2C_SDA, PIN_PCA_I2C_SCL);
 static pca9685_t pca1;
 static pca9685_t pca2;
@@ -42,18 +33,21 @@ static uint8_t receive_buffer[BUFFERONRECEIVESIZE];
 static uint8_t response_buffer[BUFFERONRECEIVESIZE];
 static uint8_t response_size = 0;
 
-// Commands that need the software I2C bus are queued by the receive
-// interrupt and executed from loop().
-static job_t job_queue[JOB_QUEUE_SIZE];
-static volatile uint8_t job_head = 0;
-static volatile uint8_t job_tail = 0;
+// The receive interrupt cannot use the software I2C bus, so it only records the
+// newest wanted state of each output and loop() applies what changed.
+// Unlike a queue, a burst of commands cannot overflow it.
+static volatile uint16_t pca2_wanted_on; // bit n: PCA #2 channel n on
+static volatile uint16_t pca2_changed;
+static volatile uint16_t servo_wanted_target[SERVO_COUNT];
+static volatile uint16_t servo_wanted_speed[SERVO_COUNT];
+static volatile uint8_t servo_changed; // bit n: servo n + 1
+static volatile uint8_t ext_pwm_wanted[2]; // EXTPWM10, EXTPWM11
+static volatile uint8_t ext_pwm_changed;
 
 static void on_receive(int num_bytes);
 static void on_request(void);
-static void process_jobs(void);
-static void job_push(uint8_t command, uint8_t number, uint8_t **data, uint8_t length);
-static void set_pump(uint8_t number, bool on);
-static void set_ev(uint8_t number, bool on);
+static void apply_changes(void);
+static void want_pca2(uint8_t channel, bool on);
 
 void setup(void)
 {
@@ -108,7 +102,7 @@ void setup(void)
 
 void loop(void)
 {
-  process_jobs();
+  apply_changes();
 
   for (uint8_t i = 0; i < SERVO_COUNT; i++)
     servo_run(&servos[i]);
@@ -136,8 +130,12 @@ static void on_receive(int num_bytes)
     break;
 
   case CMD_MOVE_SERVO:
-    if (number >= 1 && number <= SERVO_COUNT)
-      job_push(command, number, &ptr, 4);
+    if (number >= 1 && number <= SERVO_COUNT && num_bytes >= 6)
+    {
+      servo_wanted_target[number - 1] = ReadUInt16(&ptr);
+      servo_wanted_speed[number - 1] = ReadUInt16(&ptr);
+      bitSet(servo_changed, number - 1);
+    }
     break;
 
   case CMD_RGB_LED:
@@ -150,13 +148,21 @@ static void on_receive(int num_bytes)
     break;
 
   case CMD_SET_PUMP:
+    if (number >= 1 && number <= PUMP_COUNT && num_bytes >= 3)
+      want_pca2(pump_channels[number - 1], ReadUInt8(&ptr));
+    break;
+
   case CMD_SET_EV:
-    job_push(command, number, &ptr, 1);
+    if (number >= 1 && number <= EV_COUNT && num_bytes >= 3)
+      want_pca2(ev_channels[number - 1], ReadUInt8(&ptr));
     break;
 
   case CMD_SET_PWM_EXT:
-    if (number == 10 || number == 11)
-      job_push(command, number, &ptr, 1);
+    if ((number == 10 || number == 11) && num_bytes >= 3)
+    {
+      ext_pwm_wanted[number - 10] = ReadUInt8(&ptr);
+      bitSet(ext_pwm_changed, number - 10);
+    }
     break;
 
   case CMD_GET_VERSION:
@@ -204,63 +210,41 @@ static void on_request(void)
   response_size = 0;
 }
 
-static void job_push(uint8_t command, uint8_t number, uint8_t **data, uint8_t length)
+static void want_pca2(uint8_t channel, bool on)
 {
-  uint8_t next = (job_head + 1) % JOB_QUEUE_SIZE;
-  if (next == job_tail)
-    return;
-
-  job_queue[job_head].command = command;
-  job_queue[job_head].number = number;
-  for (uint8_t i = 0; i < length && i < 4; i++)
-    job_queue[job_head].data[i] = ReadUInt8(data);
-  job_head = next;
+  bitWrite(pca2_wanted_on, channel, on);
+  bitSet(pca2_changed, channel);
 }
 
-static void process_jobs(void)
+static void apply_changes(void)
 {
-  while (job_tail != job_head)
+  noInterrupts();
+  uint16_t pca2_on = pca2_wanted_on;
+  uint16_t pca2_todo = pca2_changed;
+  uint8_t servo_todo = servo_changed;
+  uint8_t ext_pwm_todo = ext_pwm_changed;
+  pca2_changed = 0;
+  servo_changed = 0;
+  ext_pwm_changed = 0;
+  interrupts();
+
+  for (uint8_t channel = 0; channel < PCA9685_CHANNEL_COUNT; channel++)
+    if (bitRead(pca2_todo, channel))
+      pca9685_set_on_off(&pca2, channel, bitRead(pca2_on, channel));
+
+  for (uint8_t i = 0; i < SERVO_COUNT; i++)
   {
-    job_t job = job_queue[job_tail];
-    job_tail = (job_tail + 1) % JOB_QUEUE_SIZE;
-
-    switch (job.command)
-    {
-    case CMD_MOVE_SERVO:
-    {
-      uint16_t target = job.data[0] | (job.data[1] << 8);
-      uint16_t speed = job.data[2] | (job.data[3] << 8);
-      servo_target(&servos[job.number - 1], target, speed);
-      break;
-    }
-    case CMD_SET_PUMP:
-      set_pump(job.number, job.data[0] != 0);
-      break;
-    case CMD_SET_EV:
-      set_ev(job.number, job.data[0] != 0);
-      break;
-    case CMD_SET_PWM_EXT:
-    {
-      uint8_t channel = job.number == 10 ? PCA_CH_EXT_PWM_10 : PCA_CH_EXT_PWM_11;
-      pca9685_set_duty(&pca1, channel, job.data[0]);
-      break;
-    }
-    default:
-      break;
-    }
+    if (!bitRead(servo_todo, i))
+      continue;
+    noInterrupts();
+    uint16_t target = servo_wanted_target[i];
+    uint16_t speed = servo_wanted_speed[i];
+    interrupts();
+    servo_target(&servos[i], target, speed);
   }
-}
 
-static void set_pump(uint8_t number, bool on)
-{
-  if (number < 1 || number > PUMP_COUNT)
-    return;
-  pca9685_set_on_off(&pca2, pump_channels[number - 1], on);
-}
-
-static void set_ev(uint8_t number, bool on)
-{
-  if (number < 1 || number > EV_COUNT)
-    return;
-  pca9685_set_on_off(&pca2, ev_channels[number - 1], on);
+  if (bitRead(ext_pwm_todo, 0))
+    pca9685_set_duty(&pca1, PCA_CH_EXT_PWM_10, ext_pwm_wanted[0]);
+  if (bitRead(ext_pwm_todo, 1))
+    pca9685_set_duty(&pca1, PCA_CH_EXT_PWM_11, ext_pwm_wanted[1]);
 }
