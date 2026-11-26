@@ -32,15 +32,16 @@
 #define PCA_CH_LED_R 0
 #define PCA_CH_LED_G 1
 #define PCA_CH_LED_B 2
-#define PCA_CH_SERVO_1 3
-#define PCA_CH_SERVO_2 4
-#define PCA_CH_SERVO_3 5
-#define PCA_CH_SERVO_4 6
-#define PCA_CH_SERVO_5 7
-#define PCA_CH_SERVO_6 8
+#define PCA_CH_EXT_PWM_10 3
+#define PCA_CH_EXT_PWM_11 4
+// Channels 5 to 8 are not wired.
+#define PCA_CH_SERVO_1 15
+#define PCA_CH_SERVO_2 14
+#define PCA_CH_SERVO_3 13
+#define PCA_CH_SERVO_4 12
+#define PCA_CH_SERVO_5 11
+#define PCA_CH_SERVO_6 10
 #define PCA_CH_SERVO_7 9
-#define PCA_CH_EXT_PWM_10 10
-#define PCA_CH_EXT_PWM_11 11
 
 // PCA9685 #2
 #define PCA_CH_PUMP_1 0

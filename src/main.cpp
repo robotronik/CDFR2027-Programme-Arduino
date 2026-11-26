@@ -21,6 +21,10 @@ static const int sensor_pins[SENSOR_COUNT] = {
     PIN_SENSOR_1, PIN_SENSOR_2, PIN_SENSOR_3, PIN_SENSOR_4,
     PIN_SENSOR_5, PIN_SENSOR_6, PIN_SENSOR_7, PIN_SENSOR_8};
 
+static const uint8_t servo_channels[SERVO_COUNT] = {
+    PCA_CH_SERVO_1, PCA_CH_SERVO_2, PCA_CH_SERVO_3, PCA_CH_SERVO_4,
+    PCA_CH_SERVO_5, PCA_CH_SERVO_6, PCA_CH_SERVO_7};
+
 static const uint8_t pump_channels[PUMP_COUNT] = {
     PCA_CH_PUMP_1, PCA_CH_PUMP_2, PCA_CH_PUMP_3,
     PCA_CH_PUMP_4, PCA_CH_PUMP_5, PCA_CH_PUMP_6};
@@ -88,7 +92,7 @@ void setup(void)
   rgb_led_init(&led, &pca1, PCA_CH_LED_R, PCA_CH_LED_G, PCA_CH_LED_B);
 
   for (uint8_t i = 0; i < SERVO_COUNT; i++)
-    servo_init(&servos[i], &pca1, PCA_CH_SERVO_1 + i, 0, 180);
+    servo_init(&servos[i], &pca1, servo_channels[i], 0, 180);
   for (uint8_t i = 0; i < SERVO_COUNT - 1; i++)
     servo_target(&servos[i], 90, 0);
   servo_target(&servos[SERVO_COUNT - 1], 150, 0);

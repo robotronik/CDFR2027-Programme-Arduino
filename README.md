@@ -57,9 +57,13 @@ two PCA9685PW PWM drivers.
 | 0 | `LED_R` |
 | 1 | `LED_G` |
 | 2 | `LED_B` |
-| 3 .. 9 | `SERVO1` .. `SERVO7` |
-| 10 | `EXTPWM10` |
-| 11 | `EXTPWM11` |
+| 3 | `EXTPWM10` |
+| 4 | `EXTPWM11` |
+| 5 .. 8 | not wired |
+| 9 .. 15 | `SERVO7` .. `SERVO1` |
+
+Servo channels are wired in reverse order: `SERVO1` is on channel 15 and
+`SERVO7` on channel 9.
 
 **PCA #2 (0x42)**
 
